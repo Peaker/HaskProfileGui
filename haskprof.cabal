@@ -17,6 +17,6 @@ cabal-version:       >=1.8
 Executable haskprof
   -- exposed-modules:
   other-modules:       Parser
-  build-depends:       base ==4.6.*, lens ==3.9.*, transformers ==0.3.*, GenericPretty ==1.2.*, attoparsec ==0.10.*, text ==0.11.*, pretty ==1.1.*
+  build-depends:       base ==4.6.*, lens ==3.9.*, transformers ==0.3.*, GenericPretty ==1.2.*, attoparsec ==0.10.*, text ==0.11.*, pretty ==1.1.*, wx >= 0.90, wxcore >= 0.90
   main-is:             Main.hs
   ghc-prof-options:    -auto-all -caf-all -rtsopts

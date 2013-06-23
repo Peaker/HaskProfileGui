@@ -7,6 +7,8 @@ import System.Environment (getArgs)
 import qualified Data.Attoparsec.Text.Lazy as P
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TIO
+import qualified GUI
+import qualified Graphics.UI.WX as WX
 
 main :: IO ()
 main = do
@@ -19,4 +21,4 @@ main = do
       "Parse error near " ++ (show . TL.intercalate " " . take 10 . TL.splitOn " ") remaining ++
       " in " ++ intercalate "." contexts ++ ": " ++ show err
     P.Done _ res -> return res
-  print res
+  WX.start $ GUI.gui res
