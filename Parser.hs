@@ -1,11 +1,12 @@
 {-# OPTIONS -Wall -O2 -fno-warn-orphans #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Parser (TimeAlloc(..), CostCentre(..), CostCentreData(..), parser) where
+module Parser (TimeAlloc(..), CostCentre(..), CostCentreData(..), TicksBytes(..), parser) where
 
 import Control.Applicative
 import Control.Lens.Operators
 import Control.Lens.Tuple
 import Control.Monad.Trans.State (State, runState)
+import Data.Attoparsec.Text.Lazy ((<?>))
 import qualified Control.Monad.Trans.State as State
 import qualified Data.Attoparsec.Text.Lazy as P
 import qualified Data.Text as T
@@ -25,6 +26,9 @@ manyTill x final = go
 data TimeAlloc = TimeAlloc { timePercent :: Double, allocPercent :: Double }
   deriving (Show)
 
+data TicksBytes = TicksBytes { ticks :: Int, bytes :: Int }
+  deriving (Show)
+
 data CostCentreData = CostCentreData
   { ccName :: T.Text
   , ccModule :: T.Text
@@ -32,6 +36,7 @@ data CostCentreData = CostCentreData
   , ccEntries :: Int
   , ccIndividual :: TimeAlloc
   , ccInherited :: TimeAlloc
+  , ccMTicksBytes :: Maybe TicksBytes
   } deriving (Show)
 
 data CostCentre = CostCentre
@@ -47,27 +52,31 @@ data IndentedCostCentre = IndentedCostCentre
 horizontalSpace :: P.Parser Char
 horizontalSpace = P.satisfy P.isHorizontalSpace
 
+skipSpace :: P.Parser ()
+skipSpace = P.skipMany horizontalSpace
+
 costCenterLine :: P.Parser IndentedCostCentre
 costCenterLine =
   -- name module no entries individual:(time alloc) inherited:(time alloc)
   IndentedCostCentre <$>
     -- indent:
-    (length <$> many horizontalSpace) <*>
+    (length <$> many horizontalSpace <?> "indent") <*>
     (CostCentreData <$>
-     -- name
-     token <* P.skipSpace <*>
-     -- module
-     token <* P.skipSpace <*>
-     -- no
-     P.decimal <* P.skipSpace <*>
-     -- entries
-     P.decimal <* P.skipSpace <*>
-     -- individual:
-     timeAlloc <* P.skipSpace <*>
-     -- inherited:
-     timeAlloc <* P.endOfLine)
+     (token <* skipSpace <?> "name") <*>
+     (token <* skipSpace <?> "module") <*>
+     (P.decimal <* skipSpace <?> "no.") <*>
+     (P.decimal <* skipSpace <?> "entries") <*>
+     (timeAlloc <* skipSpace <?> "individual") <*>
+     (timeAlloc <* skipSpace <?> "inherited") <*>
+     (Just <$>
+      (TicksBytes <$>
+       (P.decimal <* skipSpace <?> "ticks") <*>
+       (P.decimal <* skipSpace <?> "bytes"))
+      <|>
+      pure Nothing) <*
+     P.endOfLine <?> "End of line")
   where
-    timeAlloc = TimeAlloc <$> P.double <* P.skipSpace <*> P.double
+    timeAlloc = TimeAlloc <$> P.double <* skipSpace <*> P.double
 
 fromIndented :: [IndentedCostCentre] -> [CostCentre]
 fromIndented xs =
@@ -91,7 +100,7 @@ getChildren i = do
 
 parser :: P.Parser [CostCentre]
 parser = do
-  (_, mainCostCenter) <- anyLine `manyTill` costCenterLine
+  (_, mainCostCenter) <- (anyLine <?> "skipped lines until first cost centre") `manyTill` costCenterLine
   ccs <- many costCenterLine
   P.endOfInput
   return . fromIndented $ mainCostCenter : ccs

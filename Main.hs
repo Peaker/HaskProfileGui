@@ -19,6 +19,6 @@ main = do
     P.Fail remaining contexts err ->
       fail $
       "Parse error near " ++ (show . TL.intercalate " " . take 10 . TL.splitOn " ") remaining ++
-      " in " ++ intercalate "." contexts ++ ": " ++ show err
+      " in (" ++ intercalate "." contexts ++ "): " ++ show err
     P.Done _ res -> return res
   WX.start $ GUI.gui res
