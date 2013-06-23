@@ -2,20 +2,18 @@
 module GUI (gui) where
 
 import Control.Monad
-import Data.List (sortBy)
-import Data.Ord (comparing)
 import Graphics.UI.WX (Prop(..))
+import ListUtils (sortOn)
 import Parser (CostCentre(..), CostCentreData(..), TimeAlloc(..))
+import TextUtils (showText)
 import qualified Data.Text as Text
 import qualified Graphics.UI.WX as WX
 import qualified Graphics.UI.WXCore as WXC
 
-sortOn = sortBy . comparing
-
+treeAppendText :: WXC.TreeCtrl a -> WXC.TreeItem -> String -> IO WXC.TreeItem
 treeAppendText tree node text = WXC.treeCtrlAppendItem tree node text (-1) (-1) WX.objectNull
 
-showText = Text.pack . show
-
+addCostCentres :: WXC.TreeCtrl a -> WXC.TreeItem -> [CostCentre] -> IO ()
 addCostCentres tree node ccs =
   forM_ (sortOn (negate . timePercent . ccInherited . ccData) ccs) $ \cc -> do
     let

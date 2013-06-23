@@ -16,7 +16,8 @@ cabal-version:       >=1.8
 
 Executable HaskProfileGui
   -- exposed-modules:
-  other-modules:       Parser
-  build-depends:       base ==4.6.*, lens ==3.9.*, transformers ==0.3.*, attoparsec ==0.10.*, text ==0.11.*, wx >= 0.90, wxcore >= 0.90
+  other-modules:       Parser, GUI, ListUtils, TextUtils
+  build-depends:       base ==4.6.*, lens ==3.9.*, transformers ==0.3.*, attoparsec ==0.10.*, text ==0.11.*, wx >= 0.90, wxcore >= 0.90, containers >= 0.3
   main-is:             Main.hs
+  ghc-options:         -Wall
   ghc-prof-options:    -auto-all -caf-all -rtsopts

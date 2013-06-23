@@ -1,12 +1,19 @@
 {-# OPTIONS -Wall -O2 -fno-warn-orphans #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Parser (TimeAlloc(..), CostCentre(..), CostCentreData(..), TicksBytes(..), parser) where
+module Parser
+  ( TimeAlloc(..)
+  , CostCentre(..), allCostCentres
+  , CostCentreData(..), ccFullyQualifiedName
+  , TicksBytes(..)
+  , parser
+  ) where
 
 import Control.Applicative
 import Control.Lens.Operators
 import Control.Lens.Tuple
 import Control.Monad.Trans.State (State, runState)
 import Data.Attoparsec.Text.Lazy ((<?>))
+import Data.Monoid (Monoid(..))
 import qualified Control.Monad.Trans.State as State
 import qualified Data.Attoparsec.Text.Lazy as P
 import qualified Data.Text as T
@@ -26,6 +33,10 @@ manyTill x final = go
 data TimeAlloc = TimeAlloc { timePercent :: Double, allocPercent :: Double }
   deriving (Show)
 
+instance Monoid TimeAlloc where
+  mempty = TimeAlloc 0 0
+  mappend (TimeAlloc t0 a0) (TimeAlloc t1 a1) = TimeAlloc (t0+t1) (a0+a1)
+
 data TicksBytes = TicksBytes { ticks :: Int, bytes :: Int }
   deriving (Show)
 
@@ -39,10 +50,16 @@ data CostCentreData = CostCentreData
   , ccMTicksBytes :: Maybe TicksBytes
   } deriving (Show)
 
+ccFullyQualifiedName :: CostCentreData -> T.Text
+ccFullyQualifiedName cc = T.concat [ccModule cc, ".", ccName cc]
+
 data CostCentre = CostCentre
   { ccData :: CostCentreData
   , ccChildren :: [CostCentre]
   } deriving (Show)
+
+allCostCentres :: [CostCentre] -> [CostCentre]
+allCostCentres = concatMap (\cc -> cc : allCostCentres (ccChildren cc))
 
 data IndentedCostCentre = IndentedCostCentre
   { _iccIndent :: Int
