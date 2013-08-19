@@ -14,8 +14,8 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TLIO
-import qualified GUI
-import qualified Graphics.UI.WX as WX
+-- import qualified GUI
+-- import qualified Graphics.UI.WX as WX
 import qualified Parser
 
 main :: IO ()
@@ -42,6 +42,6 @@ main = do
       map (pair . ccData) $ Parser.allCostCentres res
   forM_ accumulatedCosts $ \(fqName, (individual, inherited)) ->
     TIO.putStrLn $ T.concat [fqName, ":", showTime inherited, "(", showTime individual, ")"]
-  WX.start $ GUI.gui res
+  -- WX.start $ GUI.gui res
   where
     showTime = showText . timePercent
